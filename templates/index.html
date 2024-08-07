@@ -1,0 +1,111 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iron Man Chatbot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #0f0f0f;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .chat-window {
+            background-color: #1a1a1a;
+            border-radius: 10px;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .user-message {
+            background-color: #3498db;
+            color: #ffffff;
+            text-align: right;
+        }
+        .bot-message {
+            background-color: #2c3e50;
+            color: #ffffff;
+        }
+        .input-container {
+            display: flex;
+        }
+        #user-input {
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px 0 0 5px;
+            background-color: #2c3e50;
+            color: #ffffff;
+        }
+        #send-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #e74c3c;
+            color: #ffffff;
+            border: none;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Iron Man Chatbot</h1>
+        <div class="chat-window" id="chat-window"></div>
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Type your message...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            function addMessage(message, isUser) {
+                const messageDiv = $('<div>').addClass('message').addClass(isUser ? 'user-message' : 'bot-message').text(message);
+                $('#chat-window').append(messageDiv);
+                $('#chat-window').scrollTop($('#chat-window')[0].scrollHeight);
+            }
+
+            $('#send-button').click(function() {
+                const userInput = $('#user-input').val();
+                if (userInput.trim() !== '') {
+                    addMessage(userInput, true);
+                    $('#user-input').val('');
+
+                    $.ajax({
+                        url: '/chat',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ message: userInput }),
+                        success: function(response) {
+                            addMessage(response.response, false);
+                        }
+                    });
+                }
+            });
+
+            $('#user-input').keypress(function(e) {
+                if (e.which == 13) {
+                    $('#send-button').click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
