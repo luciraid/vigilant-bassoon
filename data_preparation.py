@@ -29,9 +29,13 @@ def prepare_astronomy_dataset(sample_size=5000, chunk_size=1000, save_interval=5
     # Astrophysics Data System
     print("Downloading Astrophysics Data System dataset...")
     ads_url = "https://ui.adsabs.harvard.edu/api/v1/search/query?q=*&fl=id,title,author,date,citation_count,abstract&rows=10000&start=0"
-    ads_response = requests.get(ads_url)
-    ads_data = ads_response.json()
-    ads_df = pd.DataFrame(ads_data["response"]["docs"])
+    try:
+        ads_response = requests.get(ads_url)
+        ads_data = ads_response.json()
+        ads_df = pd.DataFrame(ads_data["response"]["docs"])
+    except requests.exceptions.JSONDecodeError:
+        print("Error: Unable to parse ADS dataset. Skipping.")
+        ads_df = pd.DataFrame()
     
     # Planetary Data System
     print("Downloading Planetary Data System dataset...")
