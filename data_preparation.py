@@ -23,13 +23,8 @@ def prepare_astronomy_dataset(sample_size=5000, chunk_size=1000, save_interval=5
 
     # Exoplanet Archive
     print("Downloading Exoplanet Archive dataset...")
-    exoplanet_url = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=exoplanets&format=csv"
+    exoplanet_url = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TblView/nph-tblView?app=ExoTbls&config=PS"
     exoplanet_df = pd.read_csv(exoplanet_url)
-
-    # Planetary Data System
-    print("Downloading Planetary Data System dataset...")
-    pds_url = "https://pds.nasa.gov/datasearch/metadata-service/datasetlist.jsp?category=all&page=1&sortcol=1&sort=asc&format=csv"
-    pds_df = pd.read_csv(pds_url)
 
     # NASA Astrophysics Data System (ADS)
     print("Downloading NASA Astrophysics Data System dataset...")
@@ -47,11 +42,6 @@ def prepare_astronomy_dataset(sample_size=5000, chunk_size=1000, save_interval=5
     heasarc_url = "https://heasarc.gsfc.nasa.gov/FTP/heasarc/dataseta.txt"
     heasarc_df = pd.read_csv(heasarc_url, delimiter="\t")
 
-    # NASA Astrobiology Program
-    print("Downloading NASA Astrobiology Program dataset...")
-    astrobiology_url = "https://astrobiology.nasa.gov/research/data/"
-    astrobiology_df = pd.read_csv(astrobiology_url)
-
     # Books and Publications
     print("Downloading astronomy books and publications...")
     books_url = "https://www.amazon.com/s?k=astronomy+books"
@@ -63,7 +53,7 @@ def prepare_astronomy_dataset(sample_size=5000, chunk_size=1000, save_interval=5
     conversations_df = pd.read_html(conversations_url)[0]
 
     # Combine all datasets
-    astronomy_df = pd.concat([exoplanet_df, ads_df, pds_df, heasarc_df, astrobiology_df, books_df, conversations_df], ignore_index=True)
+    astronomy_df = pd.concat([exoplanet_df, ads_df, heasarc_df, astrobiology_df, books_df, conversations_df], ignore_index=True)
 
     if len(astronomy_df) == 0:
         print("Astronomy datasets are empty. Skipping.")
