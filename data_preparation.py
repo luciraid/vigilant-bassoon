@@ -3,7 +3,9 @@ from sklearn.model_selection import train_test_split
 import os
 import time
 import psutil
-from kaggle.api.kaggle_api_extended import KaggleApi
+import requests
+from io import BytesIO
+from zipfile import ZipFile
 
 def log_memory_usage(msg=None):
     process = psutil.Process()
@@ -17,24 +19,35 @@ def prepare_astronomy_dataset(sample_size=5000, chunk_size=1000, save_interval=5
     start_time = time.time()
     log_memory_usage()
 
-    print("Downloading and loading astronomy dataset...")
-    try:
-        api = KaggleApi()
-        api.authenticate()
-    except Exception as e:
-        print(f"Error authenticating with Kaggle API: {e}")
-        return None, None
-
-    try:
-        api.dataset_download_file('kartashevaks/astronomy-dataset', file_name='astronomy_dataset.csv', path='.')
-        astronomy_df = pd.read_csv("astronomy_dataset.csv")
-        os.remove("astronomy_dataset.csv")
-    except Exception as e:
-        print(f"Error downloading or loading astronomy dataset: {e}")
-        return None, None
+    print("Downloading and loading astronomy datasets...")
+    
+    # Exoplanet Archive
+    print("Downloading Exoplanet Archive dataset...")
+    exoplanet_url = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=exoplanets&format=csv"
+    exoplanet_df = pd.read_csv(exoplanet_url)
+    
+    # Astrophysics Data System
+    print("Downloading Astrophysics Data System dataset...")
+    ads_url = "https://ui.adsabs.harvard.edu/api/v1/search/query?q=*&fl=id,title,author,date,citation_count,abstract&rows=10000&start=0"
+    ads_response = requests.get(ads_url)
+    ads_data = ads_response.json()
+    ads_df = pd.DataFrame(ads_data["response"]["docs"])
+    
+    # Planetary Data System
+    print("Downloading Planetary Data System dataset...")
+    pds_url = "https://pds.nasa.gov/datasearch/metadata-service/datasetlist.jsp?category=all&page=1&sortcol=1&sort=asc&format=csv"
+    pds_df = pd.read_csv(pds_url)
+    
+    # HEASARC
+    print("Downloading HEASARC dataset...")
+    heasarc_url = "https://heasarc.gsfc.nasa.gov/FTP/heasarc/dataseta.txt"
+    heasarc_df = pd.read_csv(heasarc_url, delimiter="\t")
+    
+    # Combine all datasets
+    astronomy_df = pd.concat([exoplanet_df, ads_df, pds_df, heasarc_df], ignore_index=True)
     
     if len(astronomy_df) == 0:
-        print("Astronomy dataset is empty. Skipping.")
+        print("Astronomy datasets are empty. Skipping.")
         return None, None
     
     print("Sampling data...")
@@ -67,7 +80,7 @@ def prepare_astronomy_dataset(sample_size=5000, chunk_size=1000, save_interval=5
     return train_data, val_data
 
 if __name__ == "__main__":
-    print("Preparing astronomy dataset...")
+    print("Preparing astronomy datasets...")
     astronomy_train, astronomy_val = prepare_astronomy_dataset()
     if astronomy_train is not None and astronomy_val is not None:
         astronomy_train.to_csv('astronomy_train_data.csv', index=False)
