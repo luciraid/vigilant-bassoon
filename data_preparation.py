@@ -7,10 +7,8 @@ from convokit import Corpus, download
 def prepare_dataset():
     corpus = Corpus(filename=download("movie-corpus"))
 
-    # Extract data from the corpus using convokit
-    utterances = corpus.get_utterances_dataframe()
-
-    # ... (Rest of your data preparation logic)
+    # Extract utterances from the corpus
+    utterances_df = corpus.get_utterances_dataframe()
 
     return train_data, val_data
 
@@ -57,4 +55,5 @@ def prepare_dataset():
 if __name__ == "__main__":
     train_data, val_data = prepare_dataset()
     train_data.to_csv('train_data.csv', index=False)
-    val_data.to_csv('val_data.csv', index=False)
+    val_data.to_csv('val_data.csv', index=False) 
+     return train_data, val_data
