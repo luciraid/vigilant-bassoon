@@ -1,8 +1,12 @@
 import pandas as pd
 from datasets import load_dataset
 from sklearn.model_selection import train_test_split
+import os
 
 def prepare_dataset():
+    # Set the path for dataset cache
+    os.environ['HF_DATASETS_CACHE'] = '/root/.cache/huggingface/datasets/downloads'
+
     # Load Cornell Movie-Dialogs Corpus
     movie_dialogs = load_dataset("cornell_movie_dialog_corpus")
     movie_df = pd.DataFrame(movie_dialogs['train'])
@@ -12,24 +16,28 @@ def prepare_dataset():
     imdb_df = pd.DataFrame(imdb['train'])
 
     # Load astronomy dataset
-    astronomy = load_dataset("spaceflights/astronomy_dataset")
-    astronomy_df = pd.DataFrame(astronomy['train'])
+    # Note: This dataset might not exist. You may need to find an alternative or create it.
+    try:
+        astronomy = load_dataset("spaceflights/astronomy_dataset")
+        astronomy_df = pd.DataFrame(astronomy['train'])
+    except Exception as e:
+        print(f"Error loading astronomy dataset: {e}")
+        astronomy_df = pd.DataFrame()
 
-    # Load astrology dataset (hypothetical, replace with actual dataset if available)
-    # astrology = load_dataset("your_astrology_dataset")
-    # astrology_df = pd.DataFrame(astrology['train'])
+    # Astrology dataset is not available in Hugging Face datasets
+    # You'll need to provide this dataset separately
 
     # Combine datasets
     movie_df['text'] = movie_df['utterance']
     imdb_df['text'] = imdb_df['text']
-    astronomy_df['text'] = astronomy_df['text']  # Adjust column name if necessary
-    # astrology_df['text'] = astrology_df['text']  # Uncomment when you have the astrology dataset
-
+    
+    if not astronomy_df.empty:
+        astronomy_df['text'] = astronomy_df['text']  # Adjust column name if necessary
+    
     combined_df = pd.concat([
         movie_df[['text']], 
         imdb_df[['text']], 
-        astronomy_df[['text']],
-        # astrology_df[['text']]  # Uncomment when you have the astrology dataset
+        astronomy_df[['text']] if not astronomy_df.empty else pd.DataFrame()
     ])
 
     # Filter for longer, more interesting responses
@@ -37,7 +45,6 @@ def prepare_dataset():
 
     # Split into train and validation sets
     train_data, val_data = train_test_split(combined_df, test_size=0.1, random_state=42)
-
     return train_data, val_data
 
 if __name__ == "__main__":
