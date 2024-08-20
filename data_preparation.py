@@ -3,9 +3,10 @@ from datasets import load_dataset
 from sklearn.model_selection import train_test_split
 import os
 
+from convokit import Corpus, download
+
 def prepare_dataset():
-    # Set the path for dataset cache
-    os.environ['HF_DATASETS_CACHE'] = '/root/.cache/huggingface/datasets/downloads'
+    corpus = Corpus(filename=download("movie-corpus"))'
 
     # Load Cornell Movie-Dialogs Corpus
     movie_dialogs = load_dataset("movie_corpus")
