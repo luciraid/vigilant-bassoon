@@ -9,7 +9,7 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-openai.api_key = os.getenv('OPENAI_API_KEY')
+openai.api_key = os.getenv('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')
 
 if not openai.api_key:
     raise ValueError("OpenAI API key not found. Please add it to your .env file.")
