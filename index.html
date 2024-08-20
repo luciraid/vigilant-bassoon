@@ -4,88 +4,89 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iron Man Chatbot</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: #333;
-        }
-        #chat-container {
-            width: 400px;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        #chat-messages {
-            height: 300px;
-            overflow-y: auto;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
-        }
-        #chat-messages div {
-            margin: 5px 0;
-        }
-        #user-input {
-            width: calc(100% - 60px);
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            padding: 10px;
-            background: #007bff;
-            border: none;
-            color: white;
-            cursor: pointer;
-            border-radius: 4px;
-            margin-left: 10px;
-        }
-        button:hover {
-            background: #0056b3;
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div id="chat-container">
-        <h1>Iron Man Chatbot</h1>
-        <div id="chat-messages"></div>
-        <input type="text" id="user-input" placeholder="Type your message...">
-        <button onclick="sendMessage()">Send</button>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4">Iron Man Chatbot</h1>
+        <div id="chat-container" class="bg-white rounded-lg shadow-md p-4 mb-4">
+            <div id="chat-messages" class="mb-4 h-64 overflow-y-auto"></div>
+            <form id="chat-form" class="flex">
+                <input type="text" id="user-input" class="flex-grow border rounded-l p-2" placeholder="Type your message...">
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-r">Send</button>
+            </form>
+        </div>
+        <div class="mb-4">
+            <label for="character-select" class="block mb-2">Choose a character:</label>
+            <select id="character-select" class="border rounded p-2">
+                <option value="default">Default</option>
+                <option value="ironman">Iron Man</option>
+                <option value="harvey">Harvey Specter</option>
+                <option value="lucifer">Lucifer Morningstar</option>
+            </select>
+        </div>
+        <button id="voice-input" class="bg-green-500 text-white px-4 py-2 rounded">Voice Input</button>
     </div>
+
     <script>
-        async function sendMessage() {
-            const userInput = document.getElementById('user-input').value;
-            if (!userInput) return;
-            
+        const chatMessages = document.getElementById('chat-messages');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        const characterSelect = document.getElementById('character-select');
+        const voiceInputButton = document.getElementById('voice-input');
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = userInput.value.trim();
+            if (message) {
+                addMessage(message, 'user');
+                userInput.value = '';
+                const response = await sendMessage(message);
+                addMessage(response, 'bot');
+            }
+        });
+
+        voiceInputButton.addEventListener('click', startListening);
+
+        async function sendMessage(message) {
             const response = await fetch('/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ message: userInput }),
+                body: JSON.stringify({ 
+                    message: message,
+                    character: characterSelect.value
+                }),
             });
-            
             const data = await response.json();
-            const chatMessages = document.getElementById('chat-messages');
-            
-            const userMessageDiv = document.createElement('div');
-            userMessageDiv.textContent = 'You: ' + userInput;
-            chatMessages.appendChild(userMessageDiv);
-            
-            const botMessageDiv = document.createElement('div');
-            botMessageDiv.textContent = 'Iron Man: ' + data.response;
-            chatMessages.appendChild(botMessageDiv);
-            
-            document.getElementById('user-input').value = '';
+            return data.response;
+        }
+
+        function addMessage(message, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('mb-2', sender === 'user' ? 'text-right' : 'text-left');
+            messageElement.innerHTML = `<span class="inline-block p-2 rounded-lg ${sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200'}">${message}</span>`;
+            chatMessages.appendChild(messageElement);
             chatMessages.scrollTop = chatMessages.scrollHeight;
+            if (sender === 'bot') {
+                speak(message);
+            }
+        }
+
+        function startListening() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+            recognition.start();
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                userInput.value = transcript;
+            };
+        }
+
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            window.speechSynthesis.speak(utterance);
         }
     </script>
 </body>
