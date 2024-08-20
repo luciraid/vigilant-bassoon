@@ -23,8 +23,12 @@ def prepare_astronomy_dataset(sample_size=5000, chunk_size=1000, save_interval=5
 
     # Exoplanet Archive
     print("Downloading Exoplanet Archive dataset...")
-    exoplanet_url = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TblView/nph-tblView?app=ExoTbls&config=PS"
-    exoplanet_df = pd.read_csv(exoplanet_url)
+    exoplanet_url = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=exoplanets&format=csv"
+    try:
+        exoplanet_df = pd.read_csv(exoplanet_url, engine='python', on_bad_lines='skip')
+    except pd.errors.ParserError:
+        print("Error: Unable to parse Exoplanet Archive dataset. Skipping.")
+        exoplanet_df = pd.DataFrame()
 
     # NASA Astrophysics Data System (ADS)
     print("Downloading NASA Astrophysics Data System dataset...")
@@ -42,15 +46,28 @@ def prepare_astronomy_dataset(sample_size=5000, chunk_size=1000, save_interval=5
     heasarc_url = "https://heasarc.gsfc.nasa.gov/FTP/heasarc/dataseta.txt"
     heasarc_df = pd.read_csv(heasarc_url, delimiter="\t")
 
+    # NASA Astrobiology Program
+    print("Downloading NASA Astrobiology Program dataset...")
+    astrobiology_url = "https://astrobiology.nasa.gov/research/data/"
+    astrobiology_df = pd.read_csv(astrobiology_url)
+
     # Books and Publications
     print("Downloading astronomy books and publications...")
     books_url = "https://www.amazon.com/s?k=astronomy+books"
-    books_df = pd.read_html(books_url)[0]
+    try:
+        books_df = pd.read_html(books_url)[0]
+    except ValueError:
+        print("Error: Unable to parse astronomy books dataset. Skipping.")
+        books_df = pd.DataFrame()
 
     # Astronomy Conversations
     print("Downloading astronomy conversations...")
     conversations_url = "https://www.reddit.com/r/Astronomy/"
-    conversations_df = pd.read_html(conversations_url)[0]
+    try:
+        conversations_df = pd.read_html(conversations_url)[0]
+    except ValueError:
+        print("Error: Unable to parse astronomy conversations dataset. Skipping.")
+        conversations_df = pd.DataFrame()
 
     # Combine all datasets
     astronomy_df = pd.concat([exoplanet_df, ads_df, heasarc_df, astrobiology_df, books_df, conversations_df], ignore_index=True)
