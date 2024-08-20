@@ -6,7 +6,7 @@ import os
 from convokit import Corpus, download
 
 def prepare_dataset():
-    corpus = Corpus(filename=download("movie-corpus"))'
+    corpus = Corpus(filename=download("movie-corpus"))
 
     # Load Cornell Movie-Dialogs Corpus
     movie_dialogs = load_dataset("movie_corpus")
