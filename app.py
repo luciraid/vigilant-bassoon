@@ -1,45 +1,23 @@
 import os
-import sys
-import traceback
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-import openai
-import time
+from transformers import pipeline
 
 app = Flask(__name__)
 CORS(app)
 
-print("Environment variables keys:", list(os.environ.keys()))
-api_key_set = "OPENAI_API_KEY" in os.environ
-print("OPENAI_API_KEY is set:", api_key_set)
-
-openai.api_key = os.environ.get('OPENAI_API_KEY')
-
-if not openai.api_key:
-    raise ValueError("OpenAI API key not found. Please add it to your environment variables.")
+# Load the model
+generator = pipeline('text-generation', model='gpt2')  # You can try other models too
 
 def get_chatbot_response(message):
     prompt = f"Respond with the intelligence of Tony Stark, the charm of Lucifer Morningstar, and the assertiveness of Harvey Specter to the following message: '{message}'. Include knowledge of conversations, astrology, and astronomy when relevant."
     
-    print(f"Sending request to OpenAI API with key: {openai.api_key[:5]}...{openai.api_key[-5:]}")
-    
-    time.sleep(1)  # 1 second delay to avoid rate limiting
-    
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # Changed from gpt-4 to gpt-3.5-turbo
-            messages=[
-                {"role": "system", "content": "You are a witty, intelligent, and charming AI assistant with knowledge of conversations, astrology, and astronomy. You combine the best traits of Tony Stark, Lucifer Morningstar, and Harvey Specter."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=150
-        )
-        return response.choices[0].message['content'].strip()
+        response = generator(prompt, max_length=150, num_return_sequences=1)
+        return response[0]['generated_text'].strip()
     except Exception as e:
-        print(f"Error in OpenAI API call: {str(e)}", file=sys.stderr)
-        print("Traceback:", file=sys.stderr)
-        traceback.print_exc()
-        return f"Error: {str(e)}"  # Return the actual error message for debugging
+        print(f"Error in text generation: {str(e)}")
+        return f"I apologize, but I'm having trouble generating a response right now. Error: {str(e)}"
 
 @app.route("/")
 def index():
