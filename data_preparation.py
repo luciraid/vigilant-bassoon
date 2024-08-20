@@ -50,7 +50,8 @@ def prepare_dataset():
 
     # Split into train and validation sets
     train_data, val_data = train_test_split(combined_df, test_size=0.1, random_state=42)
-    return train_data, val_data
+
+return train_data, val_data
 
 if __name__ == "__main__":
     train_data, val_data = prepare_dataset()
