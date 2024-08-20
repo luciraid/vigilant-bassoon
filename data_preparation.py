@@ -59,7 +59,7 @@ def prepare_astronomy_dataset(sample_size=5000, chunk_size=1000, save_interval=5
     print("Downloading and loading astronomy dataset...")
     try:
         api = KaggleApi()
-        api.authenticate()
+        api.authenticate_with_environment_variables()
     except Exception as e:
         print(f"Error authenticating with Kaggle API: {e}")
         return None, None
@@ -107,7 +107,7 @@ def prepare_astrology_dataset(sample_size=5000, chunk_size=1000, save_interval=5
     print("Downloading and loading astrology dataset...")
     try:
         api = KaggleApi()
-        api.authenticate()
+        api.authenticate_with_environment_variables()
     except Exception as e:
         print(f"Error authenticating with Kaggle API: {e}")
         return None, None
