@@ -1,27 +1,19 @@
+import os
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
-import torch
-import openai
-import os
 from dotenv import load_dotenv
+import openai
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-# Use the pre-trained model
-tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-model = GPT2LMHeadModel.from_pretrained("gpt2")
-print("Using pre-trained GPT-2 model")
-
+# Ensure OpenAI API key is loaded
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-def generate_text(prompt, max_length=100):
-    input_ids = tokenizer.encode(prompt, return_tensors="pt")
-    output = model.generate(input_ids, max_length=max_length, num_return_sequences=1, no_repeat_ngram_size=2)
-    return tokenizer.decode(output[0], skip_special_tokens=True)
+if not openai.api_key:
+    raise ValueError("OpenAI API key not found. Please add it to your .env file.")
 
 def get_character_response(character, message):
     prompts = {
@@ -31,9 +23,9 @@ def get_character_response(character, message):
     }
     
     response = openai.Completion.create(
-      engine="text-davinci-002",
-      prompt=prompts.get(character, f"Respond to: '{message}'"),
-      max_tokens=150
+        engine="text-davinci-003",
+        prompt=prompts.get(character, f"Respond to: '{message}'"),
+        max_tokens=150
     )
     
     return response.choices[0].text.strip()
@@ -49,7 +41,7 @@ def chat():
     character = data.get("character", "default")
     
     if character == "default":
-        response = generate_text(user_input)
+        response = get_character_response('default', user_input)
     else:
         response = get_character_response(character, user_input)
     
