@@ -1,15 +1,15 @@
 import os
+import sys
+import traceback
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import openai
+import time
 
 app = Flask(__name__)
 CORS(app)
 
-# Debugging: Print all environment variables (excluding the actual values for security)
 print("Environment variables keys:", list(os.environ.keys()))
-
-# Debugging: Check if the API key is set (don't print the actual key)
 api_key_set = "OPENAI_API_KEY" in os.environ
 print("OPENAI_API_KEY is set:", api_key_set)
 
@@ -21,9 +21,13 @@ if not openai.api_key:
 def get_chatbot_response(message):
     prompt = f"Respond with the intelligence of Tony Stark, the charm of Lucifer Morningstar, and the assertiveness of Harvey Specter to the following message: '{message}'. Include knowledge of conversations, astrology, and astronomy when relevant."
     
+    print(f"Sending request to OpenAI API with key: {openai.api_key[:5]}...{openai.api_key[-5:]}")
+    
+    time.sleep(1)  # 1 second delay to avoid rate limiting
+    
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model="gpt-3.5-turbo",  # Changed from gpt-4 to gpt-3.5-turbo
             messages=[
                 {"role": "system", "content": "You are a witty, intelligent, and charming AI assistant with knowledge of conversations, astrology, and astronomy. You combine the best traits of Tony Stark, Lucifer Morningstar, and Harvey Specter."},
                 {"role": "user", "content": prompt}
@@ -32,8 +36,10 @@ def get_chatbot_response(message):
         )
         return response.choices[0].message['content'].strip()
     except Exception as e:
-        print(f"Error in OpenAI API call: {str(e)}")
-        return "I apologize, but I'm having trouble connecting to my knowledge base right now. Could you please try again later?"
+        print(f"Error in OpenAI API call: {str(e)}", file=sys.stderr)
+        print("Traceback:", file=sys.stderr)
+        traceback.print_exc()
+        return f"Error: {str(e)}"  # Return the actual error message for debugging
 
 @app.route("/")
 def index():
