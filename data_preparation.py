@@ -1,5 +1,4 @@
 import pandas as pd
-from datasets import load_dataset
 from sklearn.model_selection import train_test_split
 import os
 
@@ -7,6 +6,13 @@ from convokit import Corpus, download
 
 def prepare_dataset():
     corpus = Corpus(filename=download("movie-corpus"))
+
+    # Extract data from the corpus using convokit
+    utterances = corpus.get_utterances_dataframe()
+
+    # ... (Rest of your data preparation logic)
+
+    return train_data, val_data
 
     # Load Cornell Movie-Dialogs Corpus
     movie_dialogs = load_dataset("movie_corpus")
