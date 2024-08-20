@@ -3,98 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iron Man Chatbot</title>
+    <title>AI Chatbot</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react@17.0.2/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/babel-standalone@6.26.0/babel.min.js"></script>
 </head>
 <body class="bg-gray-100">
-    <div class="container mx-auto p-4">
-        <h1 class="text-3xl font-bold mb-4">Iron Man Chatbot</h1>
-        <div id="chat-container" class="bg-white rounded-lg shadow-md p-4 mb-4">
-            <div id="chat-messages" class="mb-4 h-64 overflow-y-auto"></div>
-            <form id="chat-form" class="flex">
-                <input type="text" id="user-input" class="flex-grow border rounded-l p-2" placeholder="Type your message...">
-                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-r">Send</button>
-            </form>
-        </div>
-        <div class="mb-4">
-            <label for="character-select" class="block mb-2">Choose a character:</label>
-            <select id="character-select" class="border rounded p-2">
-                <option value="default">Default</option>
-                <option value="ironman">Iron Man</option>
-                <option value="harvey">Harvey Specter</option>
-                <option value="lucifer">Lucifer Morningstar</option>
-            </select>
-        </div>
-        <button id="voice-input" class="bg-green-500 text-white px-4 py-2 rounded">Voice Input</button>
-    </div>
-    <script>
-        const chatMessages = document.getElementById('chat-messages');
-        const chatForm = document.getElementById('chat-form');
-        const userInput = document.getElementById('user-input');
-        const characterSelect = document.getElementById('character-select');
-        const voiceInputButton = document.getElementById('voice-input');
+    <div id="root"></div>
 
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const message = userInput.value.trim();
-            if (message) {
-                addMessage(message, 'user');
-                userInput.value = '';
-                const response = await sendMessage(message);
-                addMessage(response, 'bot');
-            }
-        });
+    <script type="text/babel">
+        function ChatApp() {
+            const [messages, setMessages] = React.useState([]);
+            const [input, setInput] = React.useState('');
+            const [isListening, setIsListening] = React.useState(false);
 
-        voiceInputButton.addEventListener('click', startListening);
+            const sendMessage = async () => {
+                if (input.trim() === '') return;
 
-        async function sendMessage(message) {
-            try {
+                const newMessages = [...messages, { text: input, sender: 'user' }];
+                setMessages(newMessages);
+                setInput('');
+
                 const response = await fetch('/chat', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ 
-                        message: message,
-                        character: characterSelect.value
-                    }),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: input })
                 });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+
                 const data = await response.json();
-                return data.response;
-            } catch (error) {
-                console.error('Error:', error);
-                return "Sorry, there was an error processing your request.";
-            }
-        }
-
-        function addMessage(message, sender) {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('mb-2', sender === 'user' ? 'text-right' : 'text-left');
-            messageElement.innerHTML = `<span class="inline-block p-2 rounded-lg ${sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200'}">${message}</span>`;
-            chatMessages.appendChild(messageElement);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            if (sender === 'bot') {
-                speak(message);
-            }
-        }
-
-        function startListening() {
-            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.lang = 'en-US';
-            recognition.start();
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                userInput.value = transcript;
+                setMessages([...newMessages, { text: data.response, sender: 'bot' }]);
+                speakText(data.response);
             };
+
+            const handleVoiceInput = () => {
+                setIsListening(true);
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const recognition = new SpeechRecognition();
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    setInput(transcript);
+                    setIsListening(false);
+                };
+
+                recognition.start();
+            };
+
+            const speakText = (text) => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                window.speechSynthesis.speak(utterance);
+            };
+
+            return (
+                <div className="container mx-auto p-4">
+                    <h1 className="text-3xl font-bold mb-4">AI Chatbot</h1>
+                    <div className="bg-white rounded-lg shadow-md p-4 mb-4">
+                        <div className="mb-4 h-64 overflow-y-auto">
+                            {messages.map((message, index) => (
+                                <div key={index} className={`mb-2 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
+                                    <span className={`inline-block p-2 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>
+                                        {message.text}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex">
+                            <input
+                                type="text"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                className="flex-grow mr-2 p-2 border rounded"
+                                placeholder="Type your message..."
+                            />
+                            <button onClick={sendMessage} className="bg-blue-500 text-white px-4 py-2 rounded">Send</button>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleVoiceInput}
+                        className={`bg-green-500 text-white px-4 py-2 rounded ${isListening ? 'animate-pulse' : ''}`}
+                    >
+                        {isListening ? 'Listening...' : 'Voice Input'}
+                    </button>
+                </div>
+            );
         }
 
-        function speak(text) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            window.speechSynthesis.speak(utterance);
-        }
+        ReactDOM.render(<ChatApp />, document.getElementById('root'));
     </script>
 </body>
 </html>
