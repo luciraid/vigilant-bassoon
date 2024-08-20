@@ -9,26 +9,24 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# Ensure OpenAI API key is loaded
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
 if not openai.api_key:
     raise ValueError("OpenAI API key not found. Please add it to your .env file.")
 
-def get_character_response(character, message):
-    prompts = {
-        'ironman': f"As Tony Stark (Iron Man), respond to: '{message}'",
-        'harvey': f"As Harvey Specter from Suits, respond to: '{message}'",
-        'lucifer': f"As Lucifer Morningstar, respond to: '{message}'"
-    }
+def get_chatbot_response(message):
+    prompt = f"Respond with the intelligence of Tony Stark, the charm of Lucifer Morningstar, and the assertiveness of Harvey Specter to the following message: '{message}'. Include knowledge of conversations, astrology, and astronomy when relevant."
     
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=prompts.get(character, f"Respond to: '{message}'"),
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a witty, intelligent, and charming AI assistant with knowledge of conversations, astrology, and astronomy. You combine the best traits of Tony Stark, Lucifer Morningstar, and Harvey Specter."},
+            {"role": "user", "content": prompt}
+        ],
         max_tokens=150
     )
     
-    return response.choices[0].text.strip()
+    return response.choices[0].message['content'].strip()
 
 @app.route("/")
 def index():
@@ -38,12 +36,8 @@ def index():
 def chat():
     data = request.json
     user_input = data["message"]
-    character = data.get("character", "default")
     
-    if character == "default":
-        response = get_character_response('default', user_input)
-    else:
-        response = get_character_response(character, user_input)
+    response = get_chatbot_response(user_input)
     
     return jsonify({"response": response})
 
