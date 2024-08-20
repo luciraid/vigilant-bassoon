@@ -8,7 +8,7 @@ def prepare_dataset():
     os.environ['HF_DATASETS_CACHE'] = '/root/.cache/huggingface/datasets/downloads'
 
     # Load Cornell Movie-Dialogs Corpus
-    movie_dialogs = load_dataset("cornell_movie_dialog_corpus")
+    movie_dialogs = load_dataset("movie_corpus")
     movie_df = pd.DataFrame(movie_dialogs['train'])
 
     # Load IMDB dataset for additional movie content
