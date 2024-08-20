@@ -20,7 +20,7 @@ def prepare_astronomy_dataset(sample_size=5000, chunk_size=1000, save_interval=5
     print("Downloading and loading astronomy dataset...")
     try:
         api = KaggleApi()
-        api.authenticate_with_environment_variables()
+        api.authenticate(username="your_kaggle_username", key="your_kaggle_api_key")
     except Exception as e:
         print(f"Error authenticating with Kaggle API: {e}")
         return None, None
@@ -68,7 +68,7 @@ def prepare_astrology_dataset(sample_size=5000, chunk_size=1000, save_interval=5
     print("Downloading and loading astrology dataset...")
     try:
         api = KaggleApi()
-        api.authenticate_with_environment_variables()
+        api.authenticate(username="your_kaggle_username", key="your_kaggle_api_key")
     except Exception as e:
         print(f"Error authenticating with Kaggle API: {e}")
         return None, None
@@ -111,13 +111,13 @@ def prepare_astrology_dataset(sample_size=5000, chunk_size=1000, save_interval=5
 
 if __name__ == "__main__":
     print("Preparing astronomy dataset...")
-    astronomy_train, astronomy_val = prepare_astronomy_dataset()
+    astronomy_train, astronomy_val = prepare_astronomy_dataset(username="your_kaggle_username", key="your_kaggle_api_key")
     if astronomy_train is not None and astronomy_val is not None:
         astronomy_train.to_csv('astronomy_train_data.csv', index=False)
         astronomy_val.to_csv('astronomy_val_data.csv', index=False)
     
     print("Preparing astrology dataset...")
-    astrology_train, astrology_val = prepare_astrology_dataset()
+    astrology_train, astrology_val = prepare_astrology_dataset(username="your_kaggle_username", key="your_kaggle_api_key")
     if astrology_train is not None and astrology_val is not None:
         astrology_train.to_csv('astrology_train_data.csv', index=False)
         astrology_val.to_csv('astrology_val_data.csv', index=False)
