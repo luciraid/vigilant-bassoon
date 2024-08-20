@@ -4,8 +4,6 @@ import os
 import time
 import psutil
 import requests
-from io import BytesIO
-from zipfile import ZipFile
 
 def log_memory_usage(msg=None):
     process = psutil.Process()
@@ -15,62 +13,40 @@ def log_memory_usage(msg=None):
     else:
         print(f"Memory usage: {memory_usage:.2f} MB")
 
+def download_dataset(url, file_name):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        with open(file_name, 'wb') as f:
+            f.write(response.content)
+        print(f"Downloaded {file_name}")
+    except Exception as e:
+        print(f"Error downloading {file_name}: {e}")
+
 def prepare_astronomy_dataset(sample_size=5000, chunk_size=1000, save_interval=5000):
     start_time = time.time()
     log_memory_usage()
 
     print("Downloading and loading astronomy datasets...")
 
-    # Exoplanet Archive
-    print("Downloading Exoplanet Archive dataset...")
-    exoplanet_url = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=exoplanets&format=csv"
+    # Exoplanet Archive Dataset
+    exoplanet_url = "https://exoplanetarchive.ipac.caltech.edu/docs/data.html"
+    exoplanet_file = "exoplanet_data.csv"
+    download_dataset(exoplanet_url, exoplanet_file)
+
+    # Load the dataset
     try:
-        exoplanet_df = pd.read_csv(exoplanet_url, engine='python', on_bad_lines='skip')
+        exoplanet_df = pd.read_csv(exoplanet_file)
     except pd.errors.ParserError:
         print("Error: Unable to parse Exoplanet Archive dataset. Skipping.")
         exoplanet_df = pd.DataFrame()
 
-    # NASA Astrophysics Data System (ADS)
-    print("Downloading NASA Astrophysics Data System dataset...")
-    ads_url = "https://ui.adsabs.harvard.edu/api/v1/search/query?q=*&fl=id,title,author,date,citation_count,abstract&rows=10000&start=0"
-    try:
-        ads_response = requests.get(ads_url)
-        ads_data = ads_response.json()
-        ads_df = pd.DataFrame(ads_data["response"]["docs"])
-    except requests.exceptions.JSONDecodeError:
-        print("Error: Unable to parse ADS dataset. Skipping.")
-        ads_df = pd.DataFrame()
-
-    # NASA HEASARC
-    print("Downloading NASA HEASARC dataset...")
-    heasarc_url = "https://heasarc.gsfc.nasa.gov/FTP/heasarc/dataseta.txt"
-    heasarc_df = pd.read_csv(heasarc_url, delimiter="\t")
-
-    # NASA Astrobiology Program
-    print("Downloading NASA Astrobiology Program dataset...")
-    astrobiology_url = "https://astrobiology.nasa.gov/research/data/"
-    astrobiology_df = pd.read_csv(astrobiology_url)
-
-    # Books and Publications
-    print("Downloading astronomy books and publications...")
-    books_url = "https://www.amazon.com/s?k=astronomy+books"
-    try:
-        books_df = pd.read_html(books_url)[0]
-    except ValueError:
-        print("Error: Unable to parse astronomy books dataset. Skipping.")
-        books_df = pd.DataFrame()
-
-    # Astronomy Conversations
-    print("Downloading astronomy conversations...")
-    conversations_url = "https://www.reddit.com/r/Astronomy/"
-    try:
-        conversations_df = pd.read_html(conversations_url)[0]
-    except ValueError:
-        print("Error: Unable to parse astronomy conversations dataset. Skipping.")
-        conversations_df = pd.DataFrame()
+    # Replace the other datasets with valid datasets
+    # For example, use Kaggle datasets (you need to have access to them and download manually):
+    # NASA Astrophysics Data System (ADS), Astrobiology, and Astronomy Conversations datasets can be replaced with Kaggle datasets.
 
     # Combine all datasets
-    astronomy_df = pd.concat([exoplanet_df, ads_df, heasarc_df, astrobiology_df, books_df, conversations_df], ignore_index=True)
+    astronomy_df = pd.concat([exoplanet_df], ignore_index=True)
 
     if len(astronomy_df) == 0:
         print("Astronomy datasets are empty. Skipping.")
@@ -79,31 +55,12 @@ def prepare_astronomy_dataset(sample_size=5000, chunk_size=1000, save_interval=5
     print("Sampling data...")
     astronomy_df = astronomy_df.sample(n=min(sample_size, len(astronomy_df)), random_state=42)
 
-    train_chunks = []
-    val_chunks = []
-
-    print("Processing data in chunks...")
-    num_chunks = len(astronomy_df) // chunk_size + 1
-    for i, chunk in enumerate(pd.read_csv(astronomy_df, chunksize=chunk_size)):
-        train, val = train_test_split(chunk, test_size=0.1, random_state=42)
-        train_chunks.append(train)
-        val_chunks.append(val)
-
-        if (i + 1) * chunk_size % save_interval == 0:
-            print(f"Saving intermediate results (chunk {i+1} of {num_chunks})...")
-            pd.concat(train_chunks).to_csv(f'astronomy_train_data_chunk_{i+1}.csv', index=False)
-            pd.concat(val_chunks).to_csv(f'astronomy_val_data_chunk_{i+1}.csv', index=False)
-
-        log_memory_usage(f"Processing chunk {i+1} of {num_chunks}")
-
-    print("Concatenating final results...")
-    train_data = pd.concat(train_chunks)
-    val_data = pd.concat(val_chunks)
+    train, val = train_test_split(astronomy_df, test_size=0.1, random_state=42)
 
     log_memory_usage("Final results")
     print(f"Total processing time: {time.time() - start_time:.2f} seconds")
 
-    return train_data, val_data
+    return train, val
 
 if __name__ == "__main__":
     print("Preparing astronomy datasets...")
