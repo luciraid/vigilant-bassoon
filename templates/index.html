@@ -3,93 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chatbot</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/react@17.0.2/umd/react.production.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.2/umd/react-dom.production.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/babel-standalone@6.26.0/babel.min.js"></script>
+    <title>Movie-inspired Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #chat-container {
+            border: 1px solid #ccc;
+            height: 400px;
+            overflow-y: scroll;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        #user-input {
+            width: 70%;
+            padding: 5px;
+        }
+        #send-button {
+            padding: 5px 10px;
+        }
+    </style>
 </head>
-<body class="bg-gray-100">
-    <div id="root"></div>
+<body>
+    <h1>Movie-inspired Chatbot</h1>
+    <div id="chat-container"></div>
+    <input type="text" id="user-input" placeholder="Type your message...">
+    <button id="send-button">Send</button>
 
-    <script type="text/babel">
-        function ChatApp() {
-            const [messages, setMessages] = React.useState([]);
-            const [input, setInput] = React.useState('');
-            const [isListening, setIsListening] = React.useState(false);
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
 
-            const sendMessage = async () => {
-                if (input.trim() === '') return;
-
-                const newMessages = [...messages, { text: input, sender: 'user' }];
-                setMessages(newMessages);
-                setInput('');
-
-                const response = await fetch('/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: input })
-                });
-
-                const data = await response.json();
-                setMessages([...newMessages, { text: data.response, sender: 'bot' }]);
-                speakText(data.response);
-            };
-
-            const handleVoiceInput = () => {
-                setIsListening(true);
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                const recognition = new SpeechRecognition();
-
-                recognition.onresult = (event) => {
-                    const transcript = event.results[0][0].transcript;
-                    setInput(transcript);
-                    setIsListening(false);
-                };
-
-                recognition.start();
-            };
-
-            const speakText = (text) => {
-                const utterance = new SpeechSynthesisUtterance(text);
-                window.speechSynthesis.speak(utterance);
-            };
-
-            return (
-                <div className="container mx-auto p-4">
-                    <h1 className="text-3xl font-bold mb-4">AI Chatbot</h1>
-                    <div className="bg-white rounded-lg shadow-md p-4 mb-4">
-                        <div className="mb-4 h-64 overflow-y-auto">
-                            {messages.map((message, index) => (
-                                <div key={index} className={`mb-2 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
-                                    <span className={`inline-block p-2 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>
-                                        {message.text}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="flex">
-                            <input
-                                type="text"
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                className="flex-grow mr-2 p-2 border rounded"
-                                placeholder="Type your message..."
-                            />
-                            <button onClick={sendMessage} className="bg-blue-500 text-white px-4 py-2 rounded">Send</button>
-                        </div>
-                    </div>
-                    <button
-                        onClick={handleVoiceInput}
-                        className={`bg-green-500 text-white px-4 py-2 rounded ${isListening ? 'animate-pulse' : ''}`}
-                    >
-                        {isListening ? 'Listening...' : 'Voice Input'}
-                    </button>
-                </div>
-            );
+        function addMessage(sender, message) {
+            const messageElement = document.createElement('p');
+            messageElement.innerHTML = `<strong>${sender}:</strong> ${message}`;
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        ReactDOM.render(<ChatApp />, document.getElementById('root'));
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (message) {
+                addMessage('You', message);
+                fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    addMessage('Bot', data.response);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    addMessage('Bot', 'Sorry, there was an error processing your request.');
+                });
+                userInput.value = '';
+            }
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
     </script>
 </body>
 </html>
