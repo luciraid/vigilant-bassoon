@@ -23,30 +23,15 @@ def prepare_astronomy_dataset(sample_size=5000, chunk_size=1000, save_interval=5
     
     # Exoplanet Archive
     print("Downloading Exoplanet Archive dataset...")
-    exoplanet_url = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=exoplanets&format=csv"
+    exoplanet_url = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TblView/nph-tblView?app=ExoTbls&config=PS"
     exoplanet_df = pd.read_csv(exoplanet_url)
     
-    # Astrophysics Data System
-    print("Downloading Astrophysics Data System dataset...")
-    ads_url = "https://ui.adsabs.harvard.edu/api/v1/search/query?q=*&fl=id,title,author,date,citation_count,abstract&rows=10000&start=0"
-    try:
-        ads_response = requests.get(ads_url)
-        ads_data = ads_response.json()
-        ads_df = pd.DataFrame(ads_data["response"]["docs"])
-    except requests.exceptions.JSONDecodeError:
-        print("Error: Unable to parse ADS dataset. Skipping.")
-        ads_df = pd.DataFrame()
     
     # Planetary Data System
     print("Downloading Planetary Data System dataset...")
-    pds_url = "https://pds.nasa.gov/datasearch/metadata-service/datasetlist.jsp?category=all&page=1&sortcol=1&sort=asc&format=csv"
+    pds_url = "https://pds-atmospheres.nmsu.edu/data_and_services/atmospheres_data/catalog.htm"
     pds_df = pd.read_csv(pds_url)
-    
-    # HEASARC
-    print("Downloading HEASARC dataset...")
-    heasarc_url = "https://heasarc.gsfc.nasa.gov/FTP/heasarc/dataseta.txt"
-    heasarc_df = pd.read_csv(heasarc_url, delimiter="\t")
-    
+   
     # Combine all datasets
     astronomy_df = pd.concat([exoplanet_df, ads_df, pds_df, heasarc_df], ignore_index=True)
     
