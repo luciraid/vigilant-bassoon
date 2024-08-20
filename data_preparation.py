@@ -3,7 +3,6 @@ from sklearn.model_selection import train_test_split
 import os
 import time
 import psutil
-from convokit import Corpus, download
 from kaggle.api.kaggle_api_extended import KaggleApi
 
 def log_memory_usage(msg=None):
@@ -13,44 +12,6 @@ def log_memory_usage(msg=None):
         print(f"{msg}: {memory_usage:.2f} MB")
     else:
         print(f"Memory usage: {memory_usage:.2f} MB")
-
-def prepare_movie_corpus_dataset(sample_size=5000, chunk_size=1000, save_interval=5000):
-    start_time = time.time()
-    log_memory_usage()
-
-    print("Downloading and loading movie corpus...")
-    corpus = Corpus(filename=download("movie-corpus"))
-    utterances_df = corpus.get_utterances_dataframe()
-    
-    print("Sampling data...")
-    utterances_df = utterances_df.sample(n=min(sample_size, len(utterances_df)), random_state=42)
-    
-    train_chunks = []
-    val_chunks = []
-    
-    print("Processing data in chunks...")
-    num_chunks = len(utterances_df) // chunk_size + 1
-    for i, chunk in enumerate(pd.read_csv(utterances_df, chunksize=chunk_size)):
-        chunk = chunk[chunk['text'].str.len().gt(50)]
-        train, val = train_test_split(chunk, test_size=0.1, random_state=42)
-        train_chunks.append(train)
-        val_chunks.append(val)
-        
-        if (i + 1) * chunk_size % save_interval == 0:
-            print(f"Saving intermediate results (chunk {i+1} of {num_chunks})...")
-            pd.concat(train_chunks).to_csv(f'movie_train_data_chunk_{i+1}.csv', index=False)
-            pd.concat(val_chunks).to_csv(f'movie_val_data_chunk_{i+1}.csv', index=False)
-        
-        log_memory_usage(f"Processing chunk {i+1} of {num_chunks}")
-    
-    print("Concatenating final results...")
-    train_data = pd.concat(train_chunks)
-    val_data = pd.concat(val_chunks)
-    
-    log_memory_usage("Final results")
-    print(f"Total processing time: {time.time() - start_time:.2f} seconds")
-    
-    return train_data, val_data
 
 def prepare_astronomy_dataset(sample_size=5000, chunk_size=1000, save_interval=5000):
     start_time = time.time()
@@ -149,12 +110,6 @@ def prepare_astrology_dataset(sample_size=5000, chunk_size=1000, save_interval=5
     return train_data, val_data
 
 if __name__ == "__main__":
-    print("Preparing movie corpus dataset...")
-    movie_train, movie_val = prepare_movie_corpus_dataset()
-    if movie_train is not None and movie_val is not None:
-        movie_train.to_csv('movie_train_data.csv', index=False)
-        movie_val.to_csv('movie_val_data.csv', index=False)
-    
     print("Preparing astronomy dataset...")
     astronomy_train, astronomy_val = prepare_astronomy_dataset()
     if astronomy_train is not None and astronomy_val is not None:
