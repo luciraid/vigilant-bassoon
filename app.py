@@ -1,23 +1,60 @@
-import os
+import random
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from transformers import pipeline
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
 
 app = Flask(__name__)
 CORS(app)
 
-# Load the model
-generator = pipeline('text-generation', model='gpt2')  # You can try other models too
+# Download necessary NLTK data
+nltk.download('punkt')
+nltk.download('stopwords')
 
-def get_chatbot_response(message):
-    prompt = f"Respond with the intelligence of Tony Stark, the charm of Lucifer Morningstar, and the assertiveness of Harvey Specter to the following message: '{message}'. Include knowledge of conversations, astrology, and astronomy when relevant."
+# Define character traits
+traits = {
+    'tony': ['genius', 'inventor', 'sarcastic', 'confident'],
+    'lucifer': ['charming', 'witty', 'rebellious', 'hedonistic'],
+    'harvey': ['assertive', 'successful', 'sharp', 'loyal']
+}
+
+# Define response templates
+templates = [
+    "As {character} would say, {response}",
+    "Channeling my inner {character}, I'd say {response}",
+    "Here's a {character}-inspired response: {response}",
+    "In true {character} fashion: {response}"
+]
+
+# Define knowledge bases
+astronomy_facts = [
+    "Did you know that a day on Venus is longer than its year?",
+    "The Great Red Spot on Jupiter is a storm that has been raging for over 400 years.",
+    "There are more stars in the universe than grains of sand on all the beaches on Earth."
+]
+
+astrology_facts = [
+    "In astrology, your sun sign is determined by the position of the sun at your time of birth.",
+    "There are 12 zodiac signs, each associated with different personality traits.",
+    "The study of astrology dates back to ancient civilizations like the Babylonians."
+]
+
+def generate_response(message):
+    tokens = word_tokenize(message.lower())
+    tokens = [word for word in tokens if word not in stopwords.words('english')]
     
-    try:
-        response = generator(prompt, max_length=150, num_return_sequences=1)
-        return response[0]['generated_text'].strip()
-    except Exception as e:
-        print(f"Error in text generation: {str(e)}")
-        return f"I apologize, but I'm having trouble generating a response right now. Error: {str(e)}"
+    character = random.choice(['tony', 'lucifer', 'harvey'])
+    trait = random.choice(traits[character])
+    
+    if any(word in tokens for word in ['space', 'star', 'planet', 'galaxy']):
+        response = random.choice(astronomy_facts)
+    elif any(word in tokens for word in ['zodiac', 'horoscope', 'sign']):
+        response = random.choice(astrology_facts)
+    else:
+        response = f"Well, that's an interesting point. As a {trait} individual, I find that quite intriguing."
+    
+    return random.choice(templates).format(character=character.capitalize(), response=response)
 
 @app.route("/")
 def index():
@@ -28,7 +65,7 @@ def chat():
     data = request.json
     user_input = data["message"]
     
-    response = get_chatbot_response(user_input)
+    response = generate_response(user_input)
     
     return jsonify({"response": response})
 
