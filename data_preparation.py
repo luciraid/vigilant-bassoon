@@ -17,30 +17,15 @@ def prepare_dataset():
     # Load IMDB dataset for additional movie content
     imdb = load_dataset("imdb")
     imdb_df = pd.DataFrame(imdb['train'])
-
-    # Load astronomy dataset
-    # Note: This dataset might not exist. You may need to find an alternative or create it.
-    try:
-        astronomy = load_dataset("spaceflights/astronomy_dataset")
-        astronomy_df = pd.DataFrame(astronomy['train'])
-    except Exception as e:
-        print(f"Error loading astronomy dataset: {e}")
-        astronomy_df = pd.DataFrame()
-
-    # Astrology dataset is not available in Hugging Face datasets
-    # You'll need to provide this dataset separately
-
+    
     # Combine datasets
     movie_df['text'] = movie_df['utterance']
     imdb_df['text'] = imdb_df['text']
-    
-    if not astronomy_df.empty:
-        astronomy_df['text'] = astronomy_df['text']  # Adjust column name if necessary
-    
+
+
     combined_df = pd.concat([
         movie_df[['text']], 
         imdb_df[['text']], 
-        astronomy_df[['text']] if not astronomy_df.empty else pd.DataFrame()
     ])
 
     # Filter for longer, more interesting responses
@@ -55,4 +40,4 @@ if __name__ == "__main__":
     train_data, val_data = prepare_dataset()
     train_data.to_csv('train_data.csv', index=False)
     val_data.to_csv('val_data.csv', index=False) 
-     return train_data, val_data
+
