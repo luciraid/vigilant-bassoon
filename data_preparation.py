@@ -10,8 +10,6 @@ def prepare_dataset():
     # Extract utterances from the corpus
     utterances_df = corpus.get_utterances_dataframe()
 
-    return train_data, val_data
-
     # Load Cornell Movie-Dialogs Corpus
     movie_dialogs = load_dataset("movie_corpus")
     movie_df = pd.DataFrame(movie_dialogs['train'])
