@@ -40,3 +40,4 @@ jobs:
       with:
         name: fine_tuned_gpt2
         path: ./fine_tuned_gpt2
+        
